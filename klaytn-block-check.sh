@@ -1,18 +1,16 @@
 #!/bin/bash
 
 ### IMPORTANT NOTES ###
-### curl and jq needs to be installed in advance ###
+### Prerequisite: curl and jq ###
 
-### variables section ###
 remote_endpont="https://public-node-api.klaytnapi.com/v1/cypress"
 local_endpoint="http://127.0.0.1:31271"
-telegram_chat_id="chat-id"
-telegram_bot="bot-id"
-alert_message="Klaytn Node block difference is "
-block_diff_threshold="10"
+telegram_chat_id="CHAT-ID"
+telegram_bot="BOT-ID"
+alert_message="Klaytn Node block difference is: "
+block_diff_threshold="50"
 check_interval="5"
 
-### main logic ###
 while true
 do
   remote_height=$(($(curl -sX POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' $remote_endpont | jq -r .result)))
@@ -27,13 +25,13 @@ do
      echo "error: local_height not a number" >&2; exit 1
   fi
 
-  echo "klaytnapi's block height is " $remote_height
+  echo "Publick block height is " $remote_height
   echo "Local block height is " $local_height
   echo "Difference is " `expr $remote_height - $local_height`
   blockdiff=$(expr $remote_height - $local_height)
 
   if [[ $blockdiff -gt $block_diff_threshold ]]; then
-	echo "Houston, we have a problem" \
+	echo "WARNING: block height is different" \
 	&& curl -s -X POST https://api.telegram.org/$telegram_bot/sendMessage -d chat_id=$telegram_chat_id -d text="$(echo -e $alert_message $blockdiff)";
         ## && sudo systemctl restart klaytn.service
   else
